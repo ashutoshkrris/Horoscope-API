@@ -10,7 +10,6 @@ def get_horoscope_by_day(zodiac_sign: int, day: str):
         day = day.replace("-", "")
         res = requests.get(
             f"https://www.horoscope.com/us/horoscopes/general/horoscope-archive.aspx?sign={zodiac_sign}&laDate={day}")
-    print(res.status_code, res.url)
     soup = BeautifulSoup(res.content, 'html.parser')
     data = soup.find('div', attrs={'class': 'main-horoscope'})
     return data.p.text

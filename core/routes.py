@@ -1,5 +1,5 @@
-from core import app, api
-from flask import jsonify, request
+from core import api
+from flask import jsonify
 from core.utils import get_horoscope_by_day, get_horoscope_by_week, get_horoscope_by_month
 from flask_restx import Resource, reqparse
 from werkzeug.exceptions import BadRequest, NotFound
@@ -24,13 +24,10 @@ ZODIAC_SIGNS = {
 }
 
 parser = reqparse.RequestParser()
-parser.add_argument('sign', type=str, required=True,
-                    help='Please specify your zodiac sign')
+parser.add_argument('sign', type=str, required=True)
 
 parser_copy = parser.copy()
-parser_copy.add_argument('day', type=str, required=True,
-                         help='Please specify day either as today, yesterday, tomorrow or date in format YYYY-MM-DD')
-
+parser_copy.add_argument('day', type=str, required=True)
 
 @ns.route('/get-horoscope/daily')
 class DailyHoroscopeAPI(Resource):
@@ -42,7 +39,8 @@ class DailyHoroscopeAPI(Resource):
         zodiac_sign = args.get('sign')
         try:
             zodiac_num = ZODIAC_SIGNS[zodiac_sign.capitalize()]
-            datetime.strptime(day, '%Y-%m-%d')
+            if "-" in day:
+                datetime.strptime(day, '%Y-%m-%d')
             horoscope_data = get_horoscope_by_day(zodiac_num, day)
             return jsonify(success=True, data=horoscope_data, status=200)
         except KeyError:
