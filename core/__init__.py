@@ -11,8 +11,8 @@ api = Api(
     description='Get horoscope data easily using the below APIs',
     license='MIT',
     contact='Ashutosh Krishna',
-    contact_url='https://ashutoshkrris.tk',
-    contact_email='contact@ashutoshkrris.tk',
+    contact_url='https://ashutoshkrris.netlify.com',
+    contact_email='ashutoshbritish@gmail.com',
     doc='/',
     prefix='/api/v1'
 )

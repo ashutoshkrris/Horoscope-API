@@ -27,7 +27,8 @@ parser = reqparse.RequestParser()
 parser.add_argument('sign', type=str, required=True)
 
 parser_copy = parser.copy()
-parser_copy.add_argument('day', type=str, required=True)
+parser_copy.add_argument('day', type=str, required=True,
+                         help='Accepted values: Date in format (YYYY-MM-DD) OR TODAY OR TOMORROW OR YESTERDAY')
 
 @ns.route('/get-horoscope/daily')
 class DailyHoroscopeAPI(Resource):
