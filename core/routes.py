@@ -1,4 +1,4 @@
-from http.client import BAD_REQUEST
+from werkzeug import Response
 from core import api
 from flask import jsonify
 from core.utils import get_horoscope_by_day, get_horoscope_by_week, get_horoscope_by_month
@@ -34,6 +34,7 @@ parser_copy = parser.copy()
 parser_copy.add_argument('day', type=str, required=True,
                          help='Accepted values: Date in format (YYYY-MM-DD) OR TODAY OR TOMORROW OR YESTERDAY')
 
+
 @ns.route('/get-horoscope/daily')
 class DailyHoroscopeAPI(Resource):
     '''Shows daily horoscope of zodiac signs'''
@@ -46,14 +47,24 @@ class DailyHoroscopeAPI(Resource):
             zodiac_num = ZODIAC_SIGNS[zodiac_sign.capitalize()]
             if "-" in day:
                 datetime.strptime(day, '%Y-%m-%d')
-            horoscope_data = get_horoscope_by_day(zodiac_num, day)
-            return jsonify(success=True, data=horoscope_data, status=200)
+            date, horoscope_data = get_horoscope_by_day(zodiac_num, day)
+            data = {'date': date, 'horoscope_data': horoscope_data}
+            return jsonify(success=True, data=data, status=200)
         except KeyError:
-            raise NotFound(NOT_FOUND_MESSAGE)
+            e = NotFound()
+            e.data = {"status": e.code, "success": False,
+                      "message": NOT_FOUND_MESSAGE}
+            raise e
         except AttributeError:
-            raise BadRequest(BAD_REQUEST_MESSAGE)
+            e = BadRequest()
+            e.data = {"status": e.code, "success": False,
+                      "message": "Invalid value passed in day argument."}
+            raise e
         except ValueError:
-            raise BadRequest('Please enter day in correct format: YYYY-MM-DD')
+            e = BadRequest()
+            e.data = {"status": e.code, "success": False,
+                      "message": "Please enter day in the correct format: YYYY-MM-DD"}
+            raise e
 
 
 @ns.route('/get-horoscope/weekly')
@@ -65,12 +76,22 @@ class WeeklyHoroscopeAPI(Resource):
         zodiac_sign = args.get('sign')
         try:
             zodiac_num = ZODIAC_SIGNS[zodiac_sign.capitalize()]
-            horoscope_data = get_horoscope_by_week(zodiac_num)
-            return jsonify(success=True, data=horoscope_data, status=200)
+            week, horoscope_data = get_horoscope_by_week(zodiac_num)
+            data = {
+                "week": week,
+                "horoscope_data": horoscope_data
+            }
+            return jsonify(success=True, data=data, status=200)
         except KeyError:
-            raise NotFound(NOT_FOUND_MESSAGE)
+            e = NotFound()
+            e.data = {"status": e.code, "success": False,
+                      "message": NOT_FOUND_MESSAGE}
+            raise e
         except AttributeError:
-            raise BadRequest(BAD_REQUEST_MESSAGE)
+            e = BadRequest()
+            e.data = {"status": e.code, "success": False,
+                      "message": BAD_REQUEST_MESSAGE}
+            raise e
 
 
 @ns.route('/get-horoscope/monthly')
@@ -82,9 +103,19 @@ class MonthlyHoroscopeAPI(Resource):
         zodiac_sign = args.get('sign')
         try:
             zodiac_num = ZODIAC_SIGNS[zodiac_sign.capitalize()]
-            horoscope_data = get_horoscope_by_month(zodiac_num)
-            return jsonify(success=True, data=horoscope_data, status=200)
+            month, horoscope_data = get_horoscope_by_month(zodiac_num)
+            data = {
+                "month": month,
+                "horoscope_data": horoscope_data
+            }
+            return jsonify(success=True, data=data, status=200)
         except KeyError:
-            raise NotFound(NOT_FOUND_MESSAGE)
+            e = NotFound()
+            e.data = {"status": e.code, "success": False,
+                      "message": NOT_FOUND_MESSAGE}
+            raise e
         except AttributeError:
-            raise BadRequest(BAD_REQUEST_MESSAGE)
+            e = BadRequest()
+            e.data = {"status": e.code, "success": False,
+                      "message": BAD_REQUEST_MESSAGE}
+            raise e

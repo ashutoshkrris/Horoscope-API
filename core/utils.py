@@ -13,7 +13,8 @@ def get_horoscope_by_day(zodiac_sign: int, day: str):
             f"https://www.horoscope.com/us/horoscopes/general/horoscope-archive.aspx?sign={zodiac_sign}&laDate={day}")
     soup = BeautifulSoup(res.content, PARSER)
     data = soup.find('div', attrs={'class': 'main-horoscope'})
-    return data.p.text
+    date, horoscope_data = data.p.text.split(' - ')
+    return date, horoscope_data
 
 
 def get_horoscope_by_week(zodiac_sign: int):
@@ -21,7 +22,8 @@ def get_horoscope_by_week(zodiac_sign: int):
         f"https://www.horoscope.com/us/horoscopes/general/horoscope-general-weekly.aspx?sign={zodiac_sign}")
     soup = BeautifulSoup(res.content, PARSER)
     data = soup.find('div', attrs={'class': 'main-horoscope'})
-    return data.p.text
+    week, horoscope_data = data.p.text.split(' - ')
+    return week, horoscope_data
 
 
 def get_horoscope_by_month(zodiac_sign: int):
@@ -29,4 +31,5 @@ def get_horoscope_by_month(zodiac_sign: int):
         f"https://www.horoscope.com/us/horoscopes/general/horoscope-general-monthly.aspx?sign={zodiac_sign}")
     soup = BeautifulSoup(res.content, PARSER)
     data = soup.find('div', attrs={'class': 'main-horoscope'})
-    return data.p.text
+    month, horoscope_data = data.p.text.split(' - ')
+    return month, horoscope_data
