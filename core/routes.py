@@ -1,9 +1,13 @@
+from http.client import BAD_REQUEST
 from core import api
 from flask import jsonify
 from core.utils import get_horoscope_by_day, get_horoscope_by_week, get_horoscope_by_month
 from flask_restx import Resource, reqparse
 from werkzeug.exceptions import BadRequest, NotFound
 from datetime import datetime
+
+NOT_FOUND_MESSAGE = 'No such zodiac sign exists'
+BAD_REQUEST_MESSAGE = 'Something went wrong, please check the URL and the arguments.'
 
 
 ns = api.namespace('/', description='Horoscope APIs')
@@ -45,10 +49,9 @@ class DailyHoroscopeAPI(Resource):
             horoscope_data = get_horoscope_by_day(zodiac_num, day)
             return jsonify(success=True, data=horoscope_data, status=200)
         except KeyError:
-            raise NotFound('No such zodiac sign exists')
+            raise NotFound(NOT_FOUND_MESSAGE)
         except AttributeError:
-            raise BadRequest(
-                'Something went wrong, please check the URL and the arguments.')
+            raise BadRequest(BAD_REQUEST_MESSAGE)
         except ValueError:
             raise BadRequest('Please enter day in correct format: YYYY-MM-DD')
 
@@ -65,10 +68,9 @@ class WeeklyHoroscopeAPI(Resource):
             horoscope_data = get_horoscope_by_week(zodiac_num)
             return jsonify(success=True, data=horoscope_data, status=200)
         except KeyError:
-            raise NotFound('No such zodiac sign exists')
+            raise NotFound(NOT_FOUND_MESSAGE)
         except AttributeError:
-            raise BadRequest(
-                'Something went wrong, please check the URL and the arguments.')
+            raise BadRequest(BAD_REQUEST_MESSAGE)
 
 
 @ns.route('/get-horoscope/monthly')
@@ -83,7 +85,6 @@ class MonthlyHoroscopeAPI(Resource):
             horoscope_data = get_horoscope_by_month(zodiac_num)
             return jsonify(success=True, data=horoscope_data, status=200)
         except KeyError:
-            raise NotFound('No such zodiac sign exists')
+            raise NotFound(NOT_FOUND_MESSAGE)
         except AttributeError:
-            raise BadRequest(
-                'Something went wrong, please check the URL and the arguments.')
+            raise BadRequest(BAD_REQUEST_MESSAGE)
