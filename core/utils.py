@@ -22,7 +22,8 @@ def get_horoscope_by_week(zodiac_sign: int):
         f"https://www.horoscope.com/us/horoscopes/general/horoscope-general-weekly.aspx?sign={zodiac_sign}")
     soup = BeautifulSoup(res.content, PARSER)
     data = soup.find('div', attrs={'class': 'main-horoscope'})
-    week, horoscope_data = data.p.text.split(' - ')
+    start_date, end_date, horoscope_data = data.p.text.split(' - ')
+    week = f"{start_date} - {end_date}"
     return week, horoscope_data
 
 
