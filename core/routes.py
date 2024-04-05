@@ -61,12 +61,12 @@ class DailyHoroscopeAPI(Resource):
             )
             return jsonify(success=True, data=data, status=200)
         except KeyError as error:
-            logging.error(f"DailyHoroscopeAPI::get", error)
+            logging.error(f"DailyHoroscopeAPI::get::{error}")
             e = NotFound()
             e.data = {"status": e.code, "success": False, "message": NOT_FOUND_MESSAGE}
             raise e
         except AttributeError as error:
-            logging.error(f"DailyHoroscopeAPI::get", error)
+            logging.error(f"DailyHoroscopeAPI::get::{error}")
             e = BadRequest()
             e.data = {
                 "status": e.code,
@@ -75,7 +75,7 @@ class DailyHoroscopeAPI(Resource):
             }
             raise e
         except ValueError as error:
-            logging.error(f"DailyHoroscopeAPI::get", error)
+            logging.error(f"DailyHoroscopeAPI::get::{error}")
             e = BadRequest()
             e.data = {
                 "status": e.code,
@@ -103,12 +103,12 @@ class WeeklyHoroscopeAPI(Resource):
             )
             return jsonify(success=True, data=data, status=200)
         except KeyError as error:
-            logging.error(f"WeeklyHoroscopeAPI::get", error)
+            logging.error(f"WeeklyHoroscopeAPI::get::{error}")
             e = NotFound()
             e.data = {"status": e.code, "success": False, "message": NOT_FOUND_MESSAGE}
             raise e
         except AttributeError as error:
-            logging.error(f"WeeklyHoroscopeAPI::get", error)
+            logging.error(f"WeeklyHoroscopeAPI::get::{error}")
             e = BadRequest()
             e.data = {
                 "status": e.code,
@@ -145,12 +145,12 @@ class MonthlyHoroscopeAPI(Resource):
             )
             return jsonify(success=True, data=data, status=200)
         except KeyError as error:
-            logging.error(f"MonthlyHoroscopeAPI::get", error)
+            logging.error(f"MonthlyHoroscopeAPI::get::{error}")
             e = NotFound()
             e.data = {"status": e.code, "success": False, "message": NOT_FOUND_MESSAGE}
             raise e
         except AttributeError as error:
-            logging.error(f"MonthlyHoroscopeAPI::get", error)
+            logging.error(f"MonthlyHoroscopeAPI::get::{error}")
             e = BadRequest()
             e.data = {
                 "status": e.code,

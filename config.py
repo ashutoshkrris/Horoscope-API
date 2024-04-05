@@ -6,6 +6,7 @@ class Config(object):
     DEBUG = False
     TESTING = False
     CSRF_ENABLED = True
+    ERROR_404_HELP = False
 
 
 class ProductionConfig(Config):
