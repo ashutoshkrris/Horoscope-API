@@ -50,7 +50,16 @@ class DailyHoroscopeAPI(Resource):
         )
         try:
             if "-" in day:
-                day = datetime.strptime(day, "%Y-%m-%d")
+                provided_date = datetime.strptime(day, "%Y-%m-%d")
+                
+                if provided_date > datetime.now():
+                    e = BadRequest()
+                    e.data = {
+                        "status": e.code,
+                        "success": False,
+                        "message": "Future date is not supported!",
+                    }
+                    raise e
             logging.info(
                 f"DailyHoroscopeAPI::get::Calling get horoscope by day method with {day=}, {zodiac_sign=}"
             )
