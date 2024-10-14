@@ -5,12 +5,18 @@ from flask import jsonify
 from flask_restx import Resource, reqparse
 from werkzeug.exceptions import BadRequest, NotFound
 
-from core import api
+from core import api, cache
+from core.cache_util import (
+    seconds_until_end_of_day, 
+    seconds_until_end_of_month, 
+    seconds_until_end_of_week
+)
 from core.utils import (
     get_horoscope_by_day,
     get_horoscope_by_month,
     get_horoscope_by_week,
 )
+from core.zodiac_signs import ZodiacSign
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s | %(levelname)s : %(message)s"
@@ -23,7 +29,11 @@ BAD_REQUEST_MESSAGE = "Something went wrong, please check the URL and the argume
 ns = api.namespace("/", description="Horoscope APIs")
 
 parser = reqparse.RequestParser()
-parser.add_argument("sign", type=str, required=True)
+parser.add_argument(
+    "sign", 
+    type=str, 
+    required=True,
+    help=f"Accepted values: {ZodiacSign.get_all_signs()}")
 
 parser_copy = parser.copy()
 parser_copy.add_argument(
@@ -40,6 +50,7 @@ class DailyHoroscopeAPI(Resource):
     """Shows daily horoscope of zodiac signs"""
 
     @ns.doc(parser=parser_copy)
+    @cache.cached(timeout=seconds_until_end_of_day(), query_string=True)
     def get(self):
         logging.info("DailyHoroscopeAPI::get::Started getting daily horoscope")
         args = parser_copy.parse_args()
@@ -99,6 +110,7 @@ class WeeklyHoroscopeAPI(Resource):
     """Shows weekly horoscope of zodiac signs"""
 
     @ns.doc(parser=parser)
+    @cache.cached(timeout=seconds_until_end_of_week(), query_string=True)
     def get(self):
         logging.info("WeeklyHoroscopeAPI::get::Started getting weekly horoscope")
         args = parser.parse_args()
@@ -132,6 +144,7 @@ class MonthlyHoroscopeAPI(Resource):
     """Shows monthly horoscope of zodiac signs"""
 
     @ns.doc(parser=parser)
+    @cache.cached(timeout=seconds_until_end_of_month(), query_string=True)
     def get(self):
         logging.info("MonthlyHoroscopeAPI::get::Started getting weekly horoscope")
         args = parser.parse_args()

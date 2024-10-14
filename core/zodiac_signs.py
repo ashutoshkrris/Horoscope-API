@@ -18,3 +18,7 @@ class ZodiacSign(Enum):
     @classmethod
     def get_sign_value(cls, sign_name):
         return cls[sign_name.capitalize()].value
+    
+    @classmethod
+    def get_all_signs(cls):
+        return ", ".join(sign.name for sign in ZodiacSign)
