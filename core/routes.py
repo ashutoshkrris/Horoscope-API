@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime
 
-from flask import jsonify
+from flask import jsonify, make_response, request
 from flask_restx import Resource, reqparse
+import requests
 from werkzeug.exceptions import BadRequest, NotFound
 
 from core import api, cache
@@ -27,6 +28,7 @@ BAD_REQUEST_MESSAGE = "Something went wrong, please check the URL and the argume
 
 
 ns = api.namespace("/", description="Horoscope APIs")
+health_ns = api.namespace("", description="Health Check API")
 
 parser = reqparse.RequestParser()
 parser.add_argument(
@@ -43,7 +45,6 @@ parser_copy.add_argument(
     default="TODAY",
     help='Accepted values: Date in format (YYYY-MM-DD) OR "TODAY" OR "TOMORROW" OR "YESTERDAY".',
 )
-
 
 @ns.route("/get-horoscope/daily")
 class DailyHoroscopeAPI(Resource):
@@ -180,3 +181,41 @@ class MonthlyHoroscopeAPI(Resource):
                 "message": BAD_REQUEST_MESSAGE,
             }
             raise e
+
+
+@health_ns.route("/healthcheck")
+class HealthCheckAPI(Resource):
+    """Performs a health check on daily, weekly, and monthly horoscope endpoints"""
+
+    def get(self):
+        base_url = request.host_url.rstrip('/') + api.prefix
+        endpoints = [
+            "/get-horoscope/daily?sign=aries&day=today",
+            "/get-horoscope/weekly?sign=aries",
+            "/get-horoscope/monthly?sign=aries",
+        ]
+
+        results = {}
+        overall_status = "healthy"
+
+        for endpoint in endpoints:
+            try:
+                full_url = f"{base_url}{endpoint}"
+                logging.debug(f"HealthCheckAPI::get::Checking {full_url}")
+                response = requests.get(full_url)
+
+                if response.status_code == 200:
+                    results[endpoint] = "healthy"
+                else:
+                    results[endpoint] = f"unhealthy (status code: {response.status_code})"
+                    overall_status = "unhealthy"
+            except requests.exceptions.RequestException as e:
+                results[endpoint] = f"unhealthy (exception: {str(e)})"
+                overall_status = "unhealthy"
+
+        data = {
+            "status": overall_status,
+            "details": results
+        }
+        status_code = 200 if overall_status == "healthy" else 503
+        return make_response(jsonify(success=(overall_status == "healthy"), data=data, status=status_code), status_code)
