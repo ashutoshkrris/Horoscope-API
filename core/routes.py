@@ -6,16 +6,19 @@ from flask_restx import Resource, reqparse
 import requests
 from werkzeug.exceptions import BadRequest, NotFound
 
-from core import api, cache
-from core.cache_util import (
-    seconds_until_end_of_day, 
-    seconds_until_end_of_month, 
-    seconds_until_end_of_week
+from core import api
+from core.db_util import (
+    get_daily_horoscope,
+    save_daily_horoscope,
+    get_weekly_horoscope,
+    save_weekly_horoscope,
+    get_monthly_horoscope,
+    save_monthly_horoscope
 )
 from core.utils import (
     get_horoscope_by_day,
-    get_horoscope_by_month,
     get_horoscope_by_week,
+    get_horoscope_by_month,
 )
 from core.zodiac_signs import ZodiacSign
 
@@ -26,16 +29,16 @@ logging.basicConfig(
 NOT_FOUND_MESSAGE = "No such zodiac sign exists"
 BAD_REQUEST_MESSAGE = "Something went wrong, please check the URL and the arguments."
 
-
 ns = api.namespace("/", description="Horoscope APIs")
 health_ns = api.namespace("", description="Health Check API")
 
 parser = reqparse.RequestParser()
 parser.add_argument(
-    "sign", 
-    type=str, 
+    "sign",
+    type=str,
     required=True,
-    help=f"Accepted values: {ZodiacSign.get_all_signs()}")
+    help=f"Accepted values: {ZodiacSign.get_all_signs()}"
+)
 
 parser_copy = parser.copy()
 parser_copy.add_argument(
@@ -46,24 +49,23 @@ parser_copy.add_argument(
     help='Accepted values: Date in format (YYYY-MM-DD) OR "TODAY" OR "TOMORROW" OR "YESTERDAY".',
 )
 
+
 @ns.route("/get-horoscope/daily")
 class DailyHoroscopeAPI(Resource):
     """Shows daily horoscope of zodiac signs"""
 
     @ns.doc(parser=parser_copy)
-    @cache.cached(timeout=seconds_until_end_of_day(), query_string=True)
     def get(self):
         logging.info("DailyHoroscopeAPI::get::Started getting daily horoscope")
         args = parser_copy.parse_args()
         day = args.get("day")
         zodiac_sign = args.get("sign")
         logging.info(
-            f"DailyHoroscopeAPI::get::Arguments passed: {day=}, {zodiac_sign=}"
-        )
+            f"DailyHoroscopeAPI::get::Arguments passed: {day=}, {zodiac_sign=}")
+
         try:
             if "-" in day:
                 provided_date = datetime.strptime(day, "%Y-%m-%d")
-                
                 if provided_date > datetime.now():
                     e = BadRequest()
                     e.data = {
@@ -72,20 +74,28 @@ class DailyHoroscopeAPI(Resource):
                         "message": "Future date is not supported!",
                     }
                     raise e
-            logging.info(
-                f"DailyHoroscopeAPI::get::Calling get horoscope by day method with {day=}, {zodiac_sign=}"
-            )
+
+            # Check DB first
+            cached = get_daily_horoscope(zodiac_sign, day)
+            if cached:
+                logging.info("Fetched details from cache")
+                return jsonify(success=True, data=cached, status=200)
+
+            # Scrape & save
             date, horoscope_data = get_horoscope_by_day(zodiac_sign, day)
+            save_daily_horoscope(zodiac_sign, day, date, horoscope_data)
+
             data = {"date": date, "horoscope_data": horoscope_data}
-            logging.info(
-                f"DailyHoroscopeAPI::get::Completed getting daily horoscope with {data=}"
-            )
+            logging.info(f"DailyHoroscopeAPI::get::Completed with {data=}")
             return jsonify(success=True, data=data, status=200)
+
         except KeyError as error:
             logging.error(f"DailyHoroscopeAPI::get::{error}")
             e = NotFound()
-            e.data = {"status": e.code, "success": False, "message": NOT_FOUND_MESSAGE}
+            e.data = {"status": e.code, "success": False,
+                      "message": NOT_FOUND_MESSAGE}
             raise e
+
         except AttributeError as error:
             logging.error(f"DailyHoroscopeAPI::get::{error}")
             e = BadRequest()
@@ -95,6 +105,7 @@ class DailyHoroscopeAPI(Resource):
                 "message": "Invalid value passed in day argument.",
             }
             raise e
+
         except ValueError as error:
             logging.error(f"DailyHoroscopeAPI::get::{error}")
             e = BadRequest()
@@ -111,24 +122,36 @@ class WeeklyHoroscopeAPI(Resource):
     """Shows weekly horoscope of zodiac signs"""
 
     @ns.doc(parser=parser)
-    @cache.cached(timeout=seconds_until_end_of_week(), query_string=True)
     def get(self):
-        logging.info("WeeklyHoroscopeAPI::get::Started getting weekly horoscope")
+        logging.info(
+            "WeeklyHoroscopeAPI::get::Started getting weekly horoscope")
         args = parser.parse_args()
         zodiac_sign = args.get("sign")
-        logging.info(f"WeeklyHoroscopeAPI::get::Arguments passed: {zodiac_sign=}")
+        logging.info(
+            f"WeeklyHoroscopeAPI::get::Arguments passed: {zodiac_sign=}")
+
         try:
+            # Check DB
+            cached = get_weekly_horoscope(zodiac_sign)
+            if cached:
+                logging.info("Fetched details from cache")
+                return jsonify(success=True, data=cached, status=200)
+
+            # Scrape & save
             week, horoscope_data = get_horoscope_by_week(zodiac_sign)
+            save_weekly_horoscope(zodiac_sign, week, horoscope_data)
+
             data = {"week": week, "horoscope_data": horoscope_data}
-            logging.info(
-                f"WeeklyHoroscopeAPI::get::Completed getting weekly horoscope with {data=}"
-            )
+            logging.info(f"WeeklyHoroscopeAPI::get::Completed with {data=}")
             return jsonify(success=True, data=data, status=200)
+
         except KeyError as error:
             logging.error(f"WeeklyHoroscopeAPI::get::{error}")
             e = NotFound()
-            e.data = {"status": e.code, "success": False, "message": NOT_FOUND_MESSAGE}
+            e.data = {"status": e.code, "success": False,
+                      "message": NOT_FOUND_MESSAGE}
             raise e
+
         except AttributeError as error:
             logging.error(f"WeeklyHoroscopeAPI::get::{error}")
             e = BadRequest()
@@ -145,33 +168,43 @@ class MonthlyHoroscopeAPI(Resource):
     """Shows monthly horoscope of zodiac signs"""
 
     @ns.doc(parser=parser)
-    @cache.cached(timeout=seconds_until_end_of_month(), query_string=True)
     def get(self):
-        logging.info("MonthlyHoroscopeAPI::get::Started getting weekly horoscope")
+        logging.info(
+            "MonthlyHoroscopeAPI::get::Started getting monthly horoscope")
         args = parser.parse_args()
         zodiac_sign = args.get("sign")
+        logging.info(
+            f"MonthlyHoroscopeAPI::get::Arguments passed: {zodiac_sign=}")
+
         try:
-            (
-                month,
-                horoscope_data,
-                standout_days,
-                challenging_days,
-            ) = get_horoscope_by_month(zodiac_sign)
+            # Check DB
+            cached = get_monthly_horoscope(zodiac_sign)
+            logging.info("Fetched details from cache")
+            if cached:
+                return jsonify(success=True, data=cached, status=200)
+
+            # Scrape & save
+            month, horoscope_data, standout_days, challenging_days = get_horoscope_by_month(
+                zodiac_sign)
+            save_monthly_horoscope(
+                zodiac_sign, month, horoscope_data, standout_days, challenging_days)
+
             data = {
                 "month": month,
                 "horoscope_data": horoscope_data,
                 "standout_days": standout_days,
                 "challenging_days": challenging_days,
             }
-            logging.info(
-                f"MonthlyHoroscopeAPI::get::Completed getting weekly horoscope with {data=}"
-            )
+            logging.info(f"MonthlyHoroscopeAPI::get::Completed with {data=}")
             return jsonify(success=True, data=data, status=200)
+
         except KeyError as error:
             logging.error(f"MonthlyHoroscopeAPI::get::{error}")
             e = NotFound()
-            e.data = {"status": e.code, "success": False, "message": NOT_FOUND_MESSAGE}
+            e.data = {"status": e.code, "success": False,
+                      "message": NOT_FOUND_MESSAGE}
             raise e
+
         except AttributeError as error:
             logging.error(f"MonthlyHoroscopeAPI::get::{error}")
             e = BadRequest()

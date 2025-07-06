@@ -1,6 +1,5 @@
 from flask import Flask
 from decouple import config
-from flask_caching import Cache
 from flask_restx import Api
 
 app = Flask(__name__)
@@ -17,6 +16,6 @@ api = Api(
     doc="/",
     prefix="/api/v1",
 )
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+from core import routes, db_util
 
-from core import routes
+db_util.init_db()

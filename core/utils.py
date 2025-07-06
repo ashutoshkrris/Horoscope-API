@@ -11,8 +11,8 @@ logging.basicConfig(
 )
 
 PARSER = "html.parser"
-STANDOUT_DAYS_PATTERN = r"Standout days: ([\d, ]+)"
-CHALLENGING_DAYS_PATTERN = r"Challenging days: ([\d, ]+)"
+STANDOUT_DAYS_PATTERN = r"Standout (?:days|dates): ([\d, ]+)"
+CHALLENGING_DAYS_PATTERN = r"Challenging (?:days|dates): ([\d, ]+)"
 
 
 def get_horoscope_by_day(zodiac_sign: str, day: str):
