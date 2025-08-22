@@ -71,6 +71,12 @@ def get_horoscope_by_month(zodiac_sign: str):
     )
     soup = BeautifulSoup(res.content, PARSER)
     data = soup.find("div", attrs={"class": "main-horoscope"})
+
+    # Remove ad content (e.g., upshell-banner) from the horoscope content
+    ad_element = data.select_one("a.upsell-banner")
+    if ad_element:
+        ad_element.decompose()
+
     month, *horoscope_data = data.p.text.split(" - ")
     logging.info(f"get_horoscope_by_month::Scraped data = {data.p.text}")
     (
